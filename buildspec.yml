@@ -1,0 +1,7 @@
+# Build steps for AWS CodeBuild.
+version: 0.2
+phases:
+  build:
+    commands:
+      - node -v
+      - node index.js
