@@ -10,14 +10,14 @@ const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
 // if we receive rate limit errors.
 // Create the tables with On Demand billing to avoid.
 
-const s3Bucket = process.env.RESOURCE_JSON_BUCKET;
+const s3Bucket = process.env.EGV_RESOURCE_JSON_BUCKET;
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: fromNodeProviderChain(),
 });
 
-const dynamoTableName = process.env.RESOURCE_SEARCH_TABLE;
+const dynamoTableName = process.env.EGV_RESOURCE_SEARCH_TABLE;
 
 const dynamoClient = new DynamoDBClient({
     region: process.env.AWS_REGION,
