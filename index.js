@@ -69,6 +69,7 @@ async function enumerateBucket() {
                     sections.push(canonicalize(section));
                     sectionItemBatch = writeSectionToBatch({
                         ...data,
+                        key: key,
                         section: section,
                     }, sectionItemBatch);
                 } else {
@@ -77,6 +78,7 @@ async function enumerateBucket() {
                     const section = parts.slice(0, -2).join('/');
                     pageItemBatch = writePageToBatch({
                         ...data,
+                        key: key,
                         section: section,
                     }, pageItemBatch);
                 }
@@ -110,12 +112,14 @@ function writePageToBatch(data, batch) {
 }
 
 function searchContent(json) {
+    // Concatenation of many things we could search for,
+    // all converted to lower case.
     return [
         json.categories.join(' ').toLowerCase(),
         json.tags.join(' ').toLowerCase(),
         json.title ? json.title.toLowerCase() : '',
         json.summary ? json.summary.toLowerCase() : '',
-        json.content ? json.content.toLowerCase() : '',
+        json.plain ? json.plain.toLowerCase() : '',
     ].join(' ');
 }
 
@@ -124,16 +128,8 @@ async function flushPageBatch(batch) {
         pagePath: { S: canonicalize(json.link) },
         pageSection: { S: canonicalize(json.section) },
         pageDate: { S: json.date },
-        pageTitle: { S: json.title },
-        pageSummary: { S: json.summary },
-        pageContentHtml: { S: json.content },
-        pageTags: { S: json.tags.join(' ') },
-        pageCategories: { S: json.categories.join(' ') },
-        pageImage: { S: firstString(json.images) },
         pageSearchContent: { S: searchContent(json) },
-        pageImageArray: { L: normalizeArray(json.images).map((x) => ({S:x})) },
-        pageTagArray: { L: normalizeArray(json.tags).map((x) => ({S:x})) },
-        pageCategoryArray: { L: normalizeArray(json.categories).map((x) => ({S:x})) },
+        objectKey: { S: json.key },
     }));
     return writeBatch(dynamoTableName, itemsToWrite);
 }
@@ -287,7 +283,7 @@ async function writeBatch(tableName, itemsToWrite) {
                 backoff *= 2; // Exponential backoff          
             } else {
                 console.log("error writing items:", error);
-                return;
+                throw error;
             }
         }
     }
