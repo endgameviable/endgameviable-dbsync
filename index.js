@@ -115,10 +115,10 @@ function searchContent(json) {
     // Concatenation of many things we could search for,
     // all converted to lower case.
     return [
-        json.categories.join(' ').toLowerCase(),
-        json.tags.join(' ').toLowerCase(),
-        json.title ? json.title.toLowerCase() : '',
-        json.summary ? json.summary.toLowerCase() : '',
+        json.metadata.categories.join(' ').toLowerCase(),
+        json.metadata.tags.join(' ').toLowerCase(),
+        json.metadata.title ? json.metadata.title.toLowerCase() : '',
+        json.metadata.summary ? json.metadata.summary.toLowerCase() : '',
         json.plain ? json.plain.toLowerCase() : '',
     ].join(' ');
 }
