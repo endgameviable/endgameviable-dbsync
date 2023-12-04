@@ -1,6 +1,6 @@
-const { S3Client, ListObjectsV2Command, GetObjectCommand } = require('@aws-sdk/client-s3');
-const { DynamoDBClient, BatchWriteItemCommand, ProvisionedThroughputExceededException } = require('@aws-sdk/client-dynamodb');
-const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
+import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import { DynamoDBClient, BatchWriteItemCommand, ProvisionedThroughputExceededException } from '@aws-sdk/client-dynamodb';
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
 // This application reads json data files from an S3 bucket
 // and puts them into a DynamoDB table as rows.
@@ -290,12 +290,12 @@ async function writeBatch(tableName, itemsToWrite) {
 }
 
 // Lambda function handler when run by Lambda
-exports.handler = async (event, context) => {
+export async function handler(event, context) {
     console.log(`starting endgameviable dbsync from ${s3Bucket} to ${dynamoTableName}`);
     const startTime = process.hrtime.bigint();
     await main();
     console.log(`finished in ${elapsedSeconds(startTime)} sec`);
-};
+}
 
 // Invoke the handler if run directly on command line
 if (require.main === module) {

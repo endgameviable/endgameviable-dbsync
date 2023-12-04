@@ -8,4 +8,4 @@ phases:
       - npm -v
       - npm ci
       - node -v
-      - node index.js
+      - node index.mjs
