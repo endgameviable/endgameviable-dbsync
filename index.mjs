@@ -1,6 +1,9 @@
+import dotenv from 'dotenv';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, BatchWriteItemCommand, ProvisionedThroughputExceededException } from '@aws-sdk/client-dynamodb';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+
+dotenv.config({ path: '.env.local' });
 
 // This application reads json data files from an S3 bucket
 // and puts them into a DynamoDB table as rows.
@@ -130,7 +133,7 @@ async function flushPageBatch(batch) {
         pageDate: { S: json.date },
         pageSearchContent: { S: searchContent(json) },
         objectKey: { S: json.key },
-        metadata: { M: json.metadata },
+        metadata: { S: JSON.stringify(json.metadata) },
     }));
     return writeBatch(dynamoTableName, itemsToWrite);
 }

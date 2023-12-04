@@ -2,9 +2,10 @@
   "name": "endgameviable-dbcopy",
   "version": "0.1.0",
   "private": true,
-  "devDependencies": {
-    "@aws-sdk/client-dynamodb": "^3.454.0",
-    "@aws-sdk/client-s3": "^3.456.0",
-    "@aws-sdk/credential-providers": "^3.454.0"
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.465.0",
+    "@aws-sdk/client-s3": "^3.465.0",
+    "@aws-sdk/credential-providers": "^3.465.0",
+    "dotenv": "^16.3.1"
   }
 }
