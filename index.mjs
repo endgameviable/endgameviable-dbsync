@@ -130,7 +130,7 @@ async function flushPageBatch(batch) {
         pageDate: { S: json.date },
         pageSearchContent: { S: searchContent(json) },
         objectKey: { S: json.key },
-        metadata: { S: json.metadata },
+        metadata: { M: json.metadata },
     }));
     return writeBatch(dynamoTableName, itemsToWrite);
 }
