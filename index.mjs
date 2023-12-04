@@ -219,6 +219,7 @@ export async function handler(event, context) {
 }
 
 // Invoke the handler if run directly on command line
-if (require.main === module) {
-    (async () => await this.handler(undefined, undefined))();
+if (import.meta.url === `file://${process.argv[1]}`) {
+    console.log("launching from command line");
+    (async () => await handler(undefined, undefined))();
 }
