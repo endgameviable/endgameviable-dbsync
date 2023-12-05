@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, BatchWriteItemCommand, ProvisionedThroughputExceededException } from '@aws-sdk/client-dynamodb';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
 dotenv.config({ path: '.env.local' });
 
@@ -28,11 +30,8 @@ const dynamoClient = new DynamoDBClient({
 });
 
 async function main() {
-    console.log("clearing table");
     await clearDynamoTable();
-
-    console.log("enumerating s3 bucket");
-    await enumerateBucket();
+    await enumerateDirectory();
 }
 
 function elapsedSeconds(startTime) {
@@ -46,7 +45,64 @@ async function clearDynamoTable() {
     console.log('(clearing table not implemented yet)');
 }
 
+async function walkDirectory(rootDir, dir, handler) {
+  const files = await fs.readdir(join(rootDir, dir));
+  for (const file of files) {
+    const filePath = join(dir, file);
+    const fullPath = join(rootDir, filePath);
+    const stats = await fs.stat(fullPath);
+    if (stats.isDirectory()) {
+      // Recursively walk subdirectories
+      await walkDirectory(rootDir, filePath, handler);
+    } else if (stats.isFile()) {
+      // Call the async callback function for the file
+      await handler(rootDir, filePath);
+    }
+  }
+}
+
+async function enumerateDirectory() {
+    const rootDir = process.env.CONTENT_DIRECTORY;
+    console.log(`enumerating directory ${rootDir}`);
+    const pages = [];
+    const sections = [];
+    let pageItemBatch = [];
+    let sectionItemBatch = [];
+    await walkDirectory(rootDir, '', async (root, key) => {
+        if (!key.endsWith('/index.json')) return;
+        const fullPath = join(root, key);
+        const body = await fs.readFile(fullPath, 'utf-8');
+        const data = JSON.parse(body);
+        const parts = key.split('/');
+        const path = parts.slice(0, -1).join('/');
+        if (data.children && data.children.length > 0) {
+            // List page, with children
+            const section = parts.slice(0, -1).join('/');
+            sections.push(canonicalize(section));
+            sectionItemBatch = await writeSectionToBatch({
+                ...data,
+                key: key,
+                section: section,
+            }, sectionItemBatch);
+        } else {
+            // Single page, no children
+            pages.push(canonicalize(path));
+            const section = parts.slice(0, -2).join('/');
+            pageItemBatch = await writePageToBatch({
+                ...data,
+                key: key,
+                section: section,
+            }, pageItemBatch);
+        }
+    });
+    await flushPageBatch(pageItemBatch);
+    await flushSectionBatch(sectionItemBatch);
+    console.log(`found ${pages.length} pages and ${sections.length} sections`);
+    console.log("finished enumerating directory");
+}
+
 async function enumerateBucket() {
+    console.log("enumerating s3 bucket");
     const pages = [];
     const sections = [];
     let pageItemBatch = [];
@@ -105,10 +161,10 @@ async function getS3Object(key) {
     return undefined;
 }
 
-function writePageToBatch(data, batch) {
+async function writePageToBatch(data, batch) {
     batch.push(data);
     if (batch.length >= 20) {
-        flushPageBatch(batch); // async
+        await flushPageBatch(batch); // async
         batch = [];
     }
     return batch;
@@ -138,16 +194,16 @@ async function flushPageBatch(batch) {
     return writeBatch(dynamoTableName, itemsToWrite);
 }
 
-function writeSectionToBatch(data, batch) {
+async function writeSectionToBatch(data, batch) {
     batch.push(data);
     if (batch.length >= 20) {
-        flushSectionBatch(batch);
+        await flushSectionBatch(batch);
         batch = [];
     }
     return batch;
 }
 
-function flushSectionBatch(batch) {
+async function flushSectionBatch(batch) {
     console.log("flushing section batch");
 }
 
