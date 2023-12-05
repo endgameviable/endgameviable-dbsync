@@ -177,7 +177,7 @@ function searchContent(json) {
         json.metadata && json.metadata.categories ? json.metadata.categories.join(' ').toLowerCase() : '',
         json.metadata && json.metadata.tags ? json.metadata.tags.join(' ').toLowerCase() : '',
         json.metadata && json.metadata.title ? json.metadata.title.toLowerCase() : '',
-        json.metadata && json.metadata.summary ? json.metadata.summary.toLowerCase() : '',
+        json.summary ? json.summary.toLowerCase() : '',
         json.plain ? json.plain.toLowerCase() : '',
     ].join(' ');
 }
